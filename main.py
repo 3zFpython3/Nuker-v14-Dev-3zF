@@ -167,9 +167,9 @@ async def create_channels():
         await asyncio.sleep(1)
         return
     
-    print(f"\n{RED}[+] ENTER {count} CHANNEL NAMES (PRESS ENTER AFTER EACH):{RESET}")
+    print(f"\n{RED}[+] ENTER 3 CHANNEL NAMES (PRESS ENTER AFTER EACH):{RESET}")
     names = []
-    for i in range(count):
+    for i in range(3):
         name = input(f"{RED}> NAME {i+1}: {RESET}").strip()
         if name:
             names.append(name)
@@ -178,10 +178,15 @@ async def create_channels():
     
     print(f"\n{RED}[+] CREATING {count} CHANNELS...{RESET}")
     try:
+        tasks = []
+        for i in range(count):
+            name = names[i % 3]
+            tasks.append(selected_guild.create_text_channel(name))
+        
         chunk_size = 50
-        for i in range(0, len(names), chunk_size):
-            chunk = names[i:i+chunk_size]
-            await asyncio.gather(*[selected_guild.create_text_channel(name) for name in chunk], return_exceptions=True)
+        for i in range(0, len(tasks), chunk_size):
+            chunk = tasks[i:i+chunk_size]
+            await asyncio.gather(*chunk, return_exceptions=True)
         print(f"{RED}[+] {count} CHANNELS CREATED!{RESET}")
     except Exception as e:
         print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
@@ -199,9 +204,9 @@ async def create_roles():
         await asyncio.sleep(1)
         return
     
-    print(f"\n{RED}[+] ENTER {count} ROLE NAMES (PRESS ENTER AFTER EACH):{RESET}")
+    print(f"\n{RED}[+] ENTER 3 ROLE NAMES (PRESS ENTER AFTER EACH):{RESET}")
     names = []
-    for i in range(count):
+    for i in range(3):
         name = input(f"{RED}> NAME {i+1}: {RESET}").strip()
         if name:
             names.append(name)
@@ -210,14 +215,19 @@ async def create_roles():
     
     print(f"\n{RED}[+] CREATING {count} ADMIN ROLES...{RESET}")
     try:
-        chunk_size = 50
-        for i in range(0, len(names), chunk_size):
-            chunk = names[i:i+chunk_size]
-            await asyncio.gather(*[selected_guild.create_role(
+        tasks = []
+        for i in range(count):
+            name = names[i % 3]
+            tasks.append(selected_guild.create_role(
                 name=name,
                 color=discord.Color.from_rgb(139, 0, 0),
                 permissions=discord.Permissions(administrator=True)
-            ) for name in chunk], return_exceptions=True)
+            ))
+        
+        chunk_size = 50
+        for i in range(0, len(tasks), chunk_size):
+            chunk = tasks[i:i+chunk_size]
+            await asyncio.gather(*chunk, return_exceptions=True)
         print(f"{RED}[+] {count} ADMIN ROLES CREATED!{RESET}")
     except Exception as e:
         print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
