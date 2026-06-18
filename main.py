@@ -355,11 +355,3 @@ async def dmall():
     await asyncio.sleep(0.3)
 
 if __name__ == "__main__":
-    try:
-        bot.run(TOKEN, reconnect=True)
-    except discord.LoginFailure:
-        pcenter("[-] INVALID TOKEN", RED)
-        sys.exit(1)
-    except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-        sys.exit(1)
